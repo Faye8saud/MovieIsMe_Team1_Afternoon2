@@ -10,6 +10,7 @@ import SwiftUI
 struct SignInView: View {
     @State private var Email: String = ""
     @State private var Password: String = ""
+    @State private var isLoading: Bool = false
     var body: some View {
         ZStack {
                   // Background image
