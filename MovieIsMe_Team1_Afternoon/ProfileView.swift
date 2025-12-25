@@ -46,18 +46,22 @@ struct ProfileView: View {
                             //.offset(y:-10)
                             
                             Text("Xxxx234@gmail.com")
+                                .foregroundStyle(.gray)
                                 .font(.system(size: 12))
-                                .foregroundColor(Color.dark3)
+                                //.foregroundColor(.gray)
                         }
                         
                         Spacer()
                         
                         NavigationLink {
                             ProfileEditingView()
+                            .navigationBarBackButtonHidden(true)
+
                         } label: {
                             Image(systemName: "chevron.right")
                                 .foregroundColor(.gray)
                         }
+                        .tint(.gray)
 
                     }
                     .padding()
