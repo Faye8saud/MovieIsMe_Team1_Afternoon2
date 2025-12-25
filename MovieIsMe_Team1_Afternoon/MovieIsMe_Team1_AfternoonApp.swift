@@ -18,7 +18,7 @@ struct MovieIsMe_Team1_AfternoonApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            SignInView()
         }
     }
 }

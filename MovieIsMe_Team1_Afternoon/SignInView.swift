@@ -8,9 +8,12 @@
 import SwiftUI
 
 struct SignInView: View {
-    @State private var Email: String = ""
-    @State private var Password: String = ""
+    @StateObject var viewModel = UserViewModel()
+    @State private var email = ""
+    @State private var password = ""
+    @State private var signedIn = false
     @State private var isLoading: Bool = false
+    
     var body: some View {
         ZStack {
                   // Background image
@@ -53,9 +56,10 @@ struct SignInView: View {
                           .foregroundColor(.lightGrey)
                           .fontWeight(.bold)
                           .padding(.bottom, -10)
-                      TextField("Email", text: $Email)
+                      TextField("Email", text: $email)
                                  .font(.system(size: 20))
                                  .foregroundColor(.white)
+                                 //.textInputAutocapitalization(.never)
                                  .padding(.horizontal, 149)
                                  .padding(.vertical, 10)
                                  .background(Color.inputField.opacity(0.5))
@@ -66,7 +70,7 @@ struct SignInView: View {
                           .foregroundColor(.lightGrey)
                           .fontWeight(.bold)
                           .padding(.bottom, -10)
-                      TextField("password", text: $Password)
+                      TextField("password", text: $password)
                                  .font(.system(size: 20))
                                  .foregroundColor(.white)
                                  .padding(.horizontal, 149)
@@ -75,7 +79,7 @@ struct SignInView: View {
                                  .cornerRadius(8)
                       
                       Button {
-                          // sign in action
+                          signedIn = viewModel.signIn(email: email, password: password)
                       } label: {
                           Text("Sign in")
                                      .font(.headline)
@@ -100,6 +104,9 @@ struct SignInView: View {
                           
                       }
                       .padding(.top, 10)
+                      if let error = viewModel.errorMessage {
+                                      Text(error).foregroundColor(.red)
+                                  }
                   }
                   .padding(.horizontal, 24)
                   .padding(.bottom, 50)
