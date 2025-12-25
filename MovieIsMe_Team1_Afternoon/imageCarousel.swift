@@ -15,7 +15,6 @@ struct CarouselItem: Identifiable {
     let duration: String
 }
 
-
 struct RatingStars: View {
       let rating: Double
        let maxRating: Double = 5
@@ -81,15 +80,29 @@ struct HeroCarouselView: View {
         VStack(spacing: 16) {
 
             TabView(selection: $currentIndex) {
-                ForEach(movies.indices, id: \.self) { index in
-                    let movie = movies[index]
+                ForEach(movies) { movie in
 
                     ZStack(alignment: .bottomLeading) {
 
-                        Image(movie.imageName)
-                            .resizable()
-                            .frame(maxWidth: .infinity)
-                            .clipped()
+                        AsyncImage(url: URL(string: movie.imageName)) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+
+                            case .failure(_):
+                                Color.gray
+
+                            case .empty:
+                                ProgressView()
+
+                            @unknown default:
+                                EmptyView()
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .clipped()
 
                         LinearGradient(
                             colors: [
@@ -123,13 +136,11 @@ struct HeroCarouselView: View {
                     }
                     .cornerRadius(12)
                     .padding(.horizontal)
-                    .tag(index)
                 }
             }
             .frame(height: 480)
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
 
-            //Custom page indicator
             CarouselIndicator(
                 count: movies.count,
                 currentIndex: currentIndex

@@ -8,31 +8,11 @@
 
 import SwiftUI
 
-struct Movie: Identifiable {
-    let id = UUID()
-    let title: String
-    let posterName: String   // asset name or URL later
-}
 
 struct MovieCenterView: View {
     @State private var searchText = ""
     
-    let heroMovies = [
-        CarouselItem(
-            imageName: "poster1",
-            title: "Top Gun",
-            rating: 4,
-            genre: "Action",
-            duration: "2 hr 9 min"
-        ),
-        CarouselItem(
-            imageName: "poster2",
-            title: "Inception",
-            rating: 4.7,
-            genre: "Sci-Fi",
-            duration: "2 hr 28 min"
-        )
-    ]
+    @StateObject private var vm = MovieViewModel()
     
     let dramaMovies = [
         Movie(title: "The Shawshank Redemption", posterName: "poster1"),
@@ -106,7 +86,11 @@ struct MovieCenterView: View {
                             .padding(.horizontal)
                             .padding(.bottom, -20)
                         // Hero Carousel
-                        HeroCarouselView(movies: heroMovies)
+                        if vm.isLoading {
+                            ProgressView()
+                        } else {
+                            HeroCarouselView(movies: vm.heroMovies)
+                        }
                         
                         // Movie Rows
                         MovieRowView(title: "Drama", movies: dramaMovies)
@@ -117,8 +101,12 @@ struct MovieCenterView: View {
                 }
             }
         }
+        .task {
+            await vm.fetchMovies()
+        }
     }
 }
+
 
 #Preview {
     MovieCenterView()
