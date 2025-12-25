@@ -17,10 +17,10 @@ class MovieViewModel: ObservableObject {
         isLoading = true
         defer { isLoading = false }
 
-        guard let url = URL(string: "https://api.airtable.com/v0/appsfcB6YESLj4NCN/movies") else { return }
+        guard let url = URL(string: "") else { return }
 
         var request = URLRequest(url: url)
-        request.setValue("Bearer patHXtgI1qrXTZwz3.a455bfcc1a171662a512c7890954a8f4335f00601ea5d14d425baa3baa2d53c0", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer", forHTTPHeaderField: "Authorization")
         request.httpMethod = "GET"
 
         do {
