@@ -14,14 +14,29 @@ struct UserResponse: Codable {
 struct UserRecord: Codable, Identifiable {
     let id: String
     let createdTime: String
-    let fields: User
+    var fields: User
 }
 
 struct User: Codable {
-    let name: String
-    let password: String
-    let email: String
-    let profile_image: String
+    var name: String
+    var password: String
+    var email: String
+    var profile_image: String
+}
+
+extension User {
+
+    var firstName: String {
+        name.components(separatedBy: " ").first ?? ""
+    }
+
+    var lastName: String {
+        name.components(separatedBy: " ").dropFirst().joined(separator: " ")
+    }
+
+    mutating func updateName(firstName: String, lastName: String) {
+        self.name = "\(firstName) \(lastName)"
+    }
 }
 
 

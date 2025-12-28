@@ -10,28 +10,49 @@ import Combine
 
 @MainActor
 
+enum APIConstants {
+    static let baseURL = "https://api.airtable.com/v0"
+    static let baseID = "appsfcB6YESLj4NCN"
+    static let tableName = "users"
+    static let apiKey = "pat7E88yW3dgzlY61.2b7d03863aca9f1262dcb772f7728bd157e695799b43c7392d5faf4f52fcb001"
+}
+
+import Foundation
+import Combine
+
+@MainActor
 class UserViewModel: ObservableObject {
-    @Published var currentUser: User?
-    @Published var users: [User] = []
+
+    // MARK: - Published
+    @Published var currentUser: UserRecord?
+    @Published var users: [UserRecord] = []
     @Published var errorMessage: String?
-    
-    
-    init() {
-           fetchUsers()
-       }
+
+    // MARK: - Combine
     private var cancellables = Set<AnyCancellable>()
-    
+
+    // MARK: - Init
+    init() {
+        fetchUsers()
+    }
+
+    // MARK: - Fetch Users
     func fetchUsers() {
-        guard let url = URL(string: "https://api.airtable.com/v0/appsfcB6YESLj4NCN/users") else {
+        guard let url = URL(string:
+            "\(APIConstants.baseURL)/\(APIConstants.baseID)/\(APIConstants.tableName)"
+        ) else {
             print("Invalid URL")
             return
         }
-        
+
         var request = URLRequest(url: url)
-        request.setValue("Bearer pat7E88yW3dgzlY61.2b7d03863aca9f1262dcb772f7728bd157e695799b43c7392d5faf4f52fcb001", forHTTPHeaderField: "Authorization")
-        
+        request.setValue(
+            "Bearer \(APIConstants.apiKey)",
+            forHTTPHeaderField: "Authorization"
+        )
+
         URLSession.shared.dataTaskPublisher(for: request)
-            .tryMap { data, response -> Data in
+            .tryMap { data, response in
                 guard let httpResponse = response as? HTTPURLResponse,
                       httpResponse.statusCode == 200 else {
                     throw URLError(.badServerResponse)
@@ -39,50 +60,100 @@ class UserViewModel: ObservableObject {
                 return data
             }
             .decode(type: UserResponse.self, decoder: JSONDecoder())
-            .map { response in
-                response.records.map { $0.fields }
-            }
+            .map { $0.records }
             .receive(on: DispatchQueue.main)
             .sink { completion in
-                switch completion {
-                case .failure(let error):
+                if case let .failure(error) = completion {
                     self.errorMessage = error.localizedDescription
-                    print("Error fetching users: \(error)")
-                case .finished:
-                    break
+                    print("FETCH ERROR:", error)
                 }
-           }
-                receiveValue: { users in
-                self.users = users
-                print("✅ Users fetched successfully:")
-//                for user in users {
-//                    print("Name: \(user.name), Email: \(user.email), Password: \(user.password), Profile Image: \(user.profile_image)")
-//                }
+            } receiveValue: { records in
+                self.users = records
+                print("USERS FETCHED:", records.count)
             }
             .store(in: &cancellables)
     }
 
-    
+    // MARK: - Sign In
     func signIn(email: String, password: String) -> Bool {
-        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
-        print("email: \(email)\npassword: \(password)")
-        // Try to find user with matching email
-        if let user = users.first(where: { $0.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == trimmedEmail.lowercased() }) {
-            // Email exists, now check password
-            if user.password.trimmingCharacters(in: .whitespacesAndNewlines) == trimmedPassword {
-                currentUser = user
-                print("✅ Sign in successful for user: \(user.name)")
-                return true
-            } else {
-                print("❌ Sign in failed: Password is incorrect for email '\(trimmedEmail)'")
-                errorMessage = "Password is incorrect"
-                return false
-            }
-        } else {
-            print("❌ Sign in failed: Email '\(trimmedEmail)' not found")
+
+        guard let record = users.first(where: {
+            $0.fields.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == trimmedEmail
+        }) else {
             errorMessage = "Email not found"
             return false
+        }
+
+        if record.fields.password == trimmedPassword {
+            currentUser = record
+            print("✅ Signed in:", record.fields.name)
+            return true
+        } else {
+            errorMessage = "Password is incorrect"
+            return false
+        }
+    }
+
+    func updateUser(recordID: String,user: User) async throws {
+
+        let urlString =
+            "\(APIConstants.baseURL)/\(APIConstants.baseID)/\(APIConstants.tableName)/\(recordID)"
+
+        guard let url = URL(string: urlString) else {
+            throw URLError(.badURL)
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("Bearer \(APIConstants.apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "fields": [
+                "name": user.name,
+                "email": user.email,
+                "password": user.password,
+                "profile_image": user.profile_image
+            ]
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
+    }
+
+
+    // MARK: - Update Profile
+    func updateProfile( firstName: String, lastName: String, profileImageURL: String? = nil) {
+        guard var record = currentUser else { return }
+
+        // Update local model
+        record.fields.name = "\(firstName) \(lastName)"
+
+        if let imageURL = profileImageURL {
+            record.fields.profile_image = imageURL
+        }
+
+        currentUser = record   // ✅ UI updates immediately
+
+        Task {
+            do {
+                try await updateUser(
+                    recordID: record.id,
+                    user: record.fields
+                )
+                print("✅ User updated with PUT")
+            } catch {
+                print("❌ Failed to update user:", error)
+            }
         }
     }
 
