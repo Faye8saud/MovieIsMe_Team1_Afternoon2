@@ -90,6 +90,7 @@ class UserViewModel: ObservableObject {
             SessionManager.saveUserID(record.id) //saves userID
             currentUser = record
             print("✅ Signed in:", record.fields.name)
+           
             return true
         } else {
             errorMessage = "Password is incorrect"

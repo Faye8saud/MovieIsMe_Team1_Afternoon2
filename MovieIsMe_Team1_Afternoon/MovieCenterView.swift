@@ -16,6 +16,10 @@ struct MovieCenterView: View {
 
     @StateObject private var vm = MovieViewModel()
     
+    var searchResults: [CarouselItem] {
+        vm.searchResults(for: searchText)
+    }
+    
     let dramaMovies = [
         Movie(title: "The Shawshank Redemption", posterName: "poster1"),
         Movie(title: "A Star Is Born", posterName: "poster2"),
@@ -61,12 +65,12 @@ struct MovieCenterView: View {
                         .padding(.top, 10)
                         
                         NavigationLink(
-                               destination: ProfileView()
-                                   .environmentObject(userViewModel), // pass ViewModel
-                               isActive: $navigateToProfile
-                           ) {
-                               EmptyView()
-                           }
+                            destination: ProfileView()
+                                .environmentObject(userViewModel), // pass ViewModel
+                            isActive: $navigateToProfile
+                        ) {
+                            EmptyView()
+                        }
                         
                         // Search field
                         HStack(spacing: 12) {
@@ -90,26 +94,52 @@ struct MovieCenterView: View {
                         .padding(.horizontal)
                         
                         
-                        Text("High rated")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .padding(.horizontal)
-                            .padding(.bottom, -20)
-                        // Hero Carousel
-                        if vm.isLoading {
-                            ProgressView()
+                        if !searchText.isEmpty {
+                            
+                            if searchResults.isEmpty {
+                                Text("No results found")
+                                    .foregroundColor(.gray)
+                                    .padding(.top, 80)
+                                    .frame(maxWidth: .infinity)
+                            } else {
+                                Text("Search Results")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal)
+                                
+                                MovieSearchGrid(movies: searchResults)
+                            }
+                            
                         } else {
-                            HeroCarouselView(movies: vm.heroMovies)
+                            
+                            // Normal Movie Center UI
+                            Text("High rated")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .padding(.horizontal)
+                                .padding(.bottom, -20)
+                            
+                            if vm.isLoading {
+                                ProgressView()
+                            } else {
+                                HeroCarouselView(movies: vm.heroMovies)
+                            }
+                            
+                            MovieRowView(title: "Drama", movies: vm.dramaMovies)
+                            MovieRowView(title: "Comedy", movies: vm.comedyMovies)
                         }
-                        
-                        // Movie Rows
-                        MovieRowView(title: "Drama", movies: dramaMovies)
-                        MovieRowView(title: "Comedy", movies: comedyMovies)
-                        
                     }
-                    .padding(.bottom, 20)
+                        .padding(.bottom, 20)
                 }
+            }
+        }
+        .onAppear {
+            if let userID = SessionManager.getUserID() {
+                print("🎬 MovieCenterView userID:", userID)
+            } else {
+                print("❌ No userID found in MovieCenterView")
             }
         }
         .task {
@@ -118,6 +148,36 @@ struct MovieCenterView: View {
     }
 }
 
+//search view
+struct MovieSearchGrid: View {
+let movies: [CarouselItem]
+
+let columns = [
+    GridItem(.flexible(), spacing: 16),
+    GridItem(.flexible(), spacing: 16)
+]
+
+var body: some View {
+    LazyVGrid(columns: columns, spacing: 16) {
+        ForEach(movies) { movie in
+            NavigationLink {
+                // MovieDetailsView(movie: movie)
+            } label: {
+                AsyncImage(url: URL(string: movie.imageName)) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    Color.gray.opacity(0.3)
+                }
+                .frame(height: 240)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+            }
+        }
+    }
+    .padding(.horizontal)
+}
+}
 
 #Preview {
     MovieCenterView()

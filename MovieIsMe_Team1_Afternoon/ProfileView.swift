@@ -1,15 +1,26 @@
 import SwiftUI
 //movie posters
 struct ProfileView: View {
+    @StateObject private var savedVM = SavedMoviesViewModel()
+    @StateObject private var movieVM = MovieViewModel()
+   
+    var savedMovies: [CarouselItem] {
+        movieVM.heroMovies.filter {
+            savedVM.savedMovieIDs.contains($0.id)
+        }
+    }
+    
 @EnvironmentObject var userViewModel: UserViewModel
 
-//    let movies = [
-//        "poster1",
-//        "poster2",
-//        "poster3"
-//    ]
-    let movies: [String] = []
+    let movies = [
+        "poster1",
+       "poster2",
+       "poster3"
+   ]
+    //let movies: [String] = []
 @State private var backButton = false
+    
+  
     var body: some View {
         NavigationStack{
             ScrollView {
@@ -97,23 +108,15 @@ struct ProfileView: View {
                     
                     //movie posters
                     // Saved movies content
-                    if movies.isEmpty {
-
+                    if savedMovies.isEmpty {
                         VStack(spacing: 16) {
                             Image("LogoBlack")
-                                .font(.system(size: 44))
-                                .foregroundColor(.gray.opacity(0.6))
-
-                            Text("No saved movies yet, start save\nyour favourites")
-                                .font(.system(size: 14))
+                            Text("No saved movies yet")
                                 .foregroundColor(.gray)
-                                .multilineTextAlignment(.center)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.top, 130)
-
                     } else {
-
                         LazyVGrid(
                             columns: [
                                 GridItem(.flexible(), spacing: 16),
@@ -121,22 +124,24 @@ struct ProfileView: View {
                             ],
                             spacing: 16
                         ) {
-                            ForEach(movies, id: \.self) { movie in
+                            ForEach(savedMovies) { movie in
                                 NavigationLink {
                                     // MovieDetailsView(movie: movie)
                                 } label: {
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(Color.gray.opacity(0.3))
-                                        .frame(width: 172, height: 237)
-                                        .aspectRatio(2/3, contentMode: .fit)
-                                        .overlay(
-                                            Text("Poster")
-                                                .foregroundColor(.white.opacity(0.6))
-                                        )
+                                    AsyncImage(url: URL(string: movie.imageName)) { image in
+                                        image
+                                            .resizable()
+                                            .scaledToFill()
+                                    } placeholder: {
+                                        Color.gray.opacity(0.3)
+                                    }
+                                    .frame(width: 172, height: 237)
+                                    .clipShape(RoundedRectangle(cornerRadius: 16))
                                 }
                             }
                         }
                     }
+
 
                     Spacer(minLength: 40)
                 }
@@ -144,7 +149,13 @@ struct ProfileView: View {
             }
             .background(Color.black.ignoresSafeArea())
         }
+        .task {
+            await movieVM.fetchMovies()
+            await savedVM.fetchSavedMovies()
+        }
+
     }
+   
 }
 
 #Preview {
