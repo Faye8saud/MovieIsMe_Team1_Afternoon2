@@ -51,15 +51,18 @@ struct MovieCenterView: View {
                             Button {
                                 // profile action
                                 navigateToProfile = true
-                            } label: {
-                                Image("userIcon1")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 34, height: 34)
-                                    .padding(10)
-                                    .background(Color.dark1)
-                                    .clipShape(Circle())
                             }
+                            label: {AsyncImage(url: URL(string: userViewModel.currentUser?.fields.profile_image ?? "")) { image in
+                                    image
+                                         .resizable()
+                                        .scaledToFit()
+                            } placeholder: {
+                                Color.gray.opacity(0.3)
+                            }
+                          }
+                           .frame(width: 41, height: 41)
+                           .background(Color.dark1)
+                         .clipShape(Circle())
                         }
                         .padding(.horizontal)
                         .padding(.top, 10)
