@@ -15,6 +15,45 @@ struct SignInView: View {
     @State private var signedIn = false
     @State private var isLoading: Bool = false
     
+    
+    struct PasswordField: View {
+        @Binding var password: String
+        let isError: Bool
+        @State private var isVisible = false
+
+        var body: some View {
+            HStack {
+                if isVisible {
+                    TextField("Password", text: $password)
+                        .foregroundColor(isError ? .red : .white)
+                        .tint(isError ? .red : .white)
+                } else {
+                    SecureField("Password", text: $password)
+                        .foregroundColor(isError ? .red : .white)
+                        .tint(isError ? .red : .white)
+                }
+
+                Button {
+                    isVisible.toggle()
+                } label: {
+                    Image(systemName: isVisible ? "eye.slash" : "eye")
+                        .foregroundColor(.lightGrey)
+                }
+            }
+            .font(.system(size: 20))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity)
+            .background(Color.inputField.opacity(0.5))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(isError ? .red : .clear, lineWidth: 1.5)
+            )
+            .cornerRadius(8)
+        }
+    }
+
+    
     var body: some View {
         NavigationStack{
             ZStack {
@@ -52,34 +91,45 @@ struct SignInView: View {
                         .fontWeight(.bold)
                         .offset(y:-10)
                     
-                    // inputs
                     Text("Email")
                         .font(.body)
                         .foregroundColor(.lightGrey)
                         .fontWeight(.bold)
                         .padding(.bottom, -10)
+
                     TextField("Email", text: $email)
                         .font(.system(size: 20))
-                        .foregroundColor(.white)
-                    //.textInputAutocapitalization(.never)
-                        .padding(.horizontal, 149)
+                        .foregroundColor(
+                                userViewModel.signInError == .email ? .red : .white
+                            )
+                            .tint(
+                                userViewModel.signInError == .email ? .red : .white   // cursor color
+                            )
+                        .padding(.horizontal, 12)   // internal padding
                         .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity) // fill width
                         .background(Color.inputField.opacity(0.5))
                         .cornerRadius(8)
-                    
+                        .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(
+                                        userViewModel.signInError == .email ? .red : .clear,
+                                        lineWidth: 1.5
+                                    )
+                            )
+
+
                     Text("Password")
                         .font(.body)
                         .foregroundColor(.lightGrey)
                         .fontWeight(.bold)
                         .padding(.bottom, -10)
-                    TextField("password", text: $password)
-                        .font(.system(size: 20))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 149)
-                        .padding(.vertical, 10)
-                        .background(Color.inputField.opacity(0.5))
-                        .cornerRadius(8)
-                    
+
+                    PasswordField(
+                        password: $password,
+                        isError: userViewModel.signInError == .password
+                    )
+
                     Button {
                         signedIn = userViewModel.signIn(email: email, password: password)
 
@@ -95,21 +145,8 @@ struct SignInView: View {
                             .cornerRadius(8)
                         
                         
-                        /*.font(.headline)
-                         .frame(maxWidth: .infinity)
-                         .background(Color.yellow)
-                         .foregroundColor(.black)
-                         .padding(.horizontal, 16)
-                         .padding(.vertical, 14)
-                         .cornerRadius(14)
-                         .frame(height: 50)
-                         */
-                        
                     }
                     .padding(.top, 10)
-//                    if let error = userViewModel.errorMessage {
-//                        Text(error).foregroundColor(.red)
-//                    }
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 50)

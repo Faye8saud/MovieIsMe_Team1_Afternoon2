@@ -17,12 +17,21 @@ enum APIConstants {
     static let apiKey = "pat7E88yW3dgzlY61.2b7d03863aca9f1262dcb772f7728bd157e695799b43c7392d5faf4f52fcb001"
 }
 
+enum SignInError {
+    case email
+    case password
+}
+
+
 class UserViewModel: ObservableObject {
 
     // MARK: - Published
     @Published var currentUser: UserRecord?
     @Published var users: [UserRecord] = []
     @Published var errorMessage: String?
+    @Published var signInError: SignInError?
+
+
 
     // MARK: - Combine
     private var cancellables = Set<AnyCancellable>()
@@ -72,27 +81,38 @@ class UserViewModel: ObservableObject {
 
     // MARK: - Sign In
     func signIn(email: String, password: String) -> Bool {
+        let trimmedEmail = email
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
 
-        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPassword = password
+            .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard let record = users.first(where: {$0.fields.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == trimmedEmail
+        signInError = nil
+        errorMessage = nil
+
+        guard let record = users.first(where: {
+            $0.fields.email
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased() == trimmedEmail
         }) else {
             errorMessage = "Email not found"
+            signInError = .email
             return false
         }
 
         if record.fields.password == trimmedPassword {
-            SessionManager.saveUserID(record.id) //saves userID
+            SessionManager.saveUserID(record.id)
             currentUser = record
             print("✅ Signed in:", record.fields.name)
-           
             return true
         } else {
             errorMessage = "Password is incorrect"
+            signInError = .password
             return false
         }
     }
+
 
     func updateUser(recordID: String,user: User) async throws {
 
