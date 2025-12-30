@@ -130,8 +130,9 @@ struct MovieCenterView: View {
                                 HeroCarouselView(movies: vm.heroMovies)
                             }
                             
-                            MovieRowView(title: "Drama", movies: vm.dramaMovies)
-                            MovieRowView(title: "Comedy", movies: vm.comedyMovies)
+                            MovieRowView(title: "Drama", movies: vm.heroMovies)
+                            MovieRowView(title: "Comedy", movies: vm.heroMovies)
+
                         }
                     }
                         .padding(.bottom, 20)

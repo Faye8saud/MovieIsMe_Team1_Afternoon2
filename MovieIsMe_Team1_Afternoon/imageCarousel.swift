@@ -148,3 +148,21 @@ struct HeroCarouselView: View {
         }
     }
 }
+extension CarouselItem {
+    func toMovieRecord() -> MovieRecord {
+        MovieRecord(
+            id: self.id,                 // هذا مهم
+            createdTime: "",
+            fields: MovieFields(
+                name: self.title,
+                poster: self.imageName,
+                story: "",
+                runtime: self.duration,
+                genre: [self.genre],
+                rating: "",
+                imdbRating: self.rating * 2, // تحويل 5 → 10
+                language: []
+            )
+        )
+    }
+}
