@@ -30,8 +30,8 @@ struct MovieRowView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
                     ForEach(movies) { movie in
-                        NavigationLink(destination: /*MovieDetailView(movie: movie)*/ MovieDetailsView() ) {
-                            MoviePosterView(movie: movie)
+                        NavigationLink(destination: MovieDetailView(movie: movie.toRecord())) {
+                            
                         }
                     }
                 }

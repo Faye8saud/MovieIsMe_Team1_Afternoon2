@@ -117,6 +117,25 @@ struct MovieCenterView: View {
         }
     }
 }
+//وسن اضفت
+extension Movie {
+    func toRecord() -> MovieRecord {
+        MovieRecord(
+            id: UUID().uuidString,
+            createdTime: "",
+            fields: MovieFields(
+                name: self.title,
+                poster: self.posterName,      // إذا posterName عندك رابط URL استمري، إذا اسم صورة محلية راح نضبطها تحت
+                story: "",
+                runtime: "",
+                genre: [],
+                rating: "",
+                imdbRating: 0.0,
+                language: []
+            )
+        )
+    }
+}
 
 
 #Preview {
