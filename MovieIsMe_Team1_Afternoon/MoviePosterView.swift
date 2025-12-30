@@ -11,11 +11,25 @@ struct MoviePosterView: View {
     let movie: Movie
 
     var body: some View {
-        Image(movie.posterName)
-            .resizable()
-            .scaledToFill()
-            .frame(width: 208, height: 275)
-            .cornerRadius(12)
-            .clipped()
+        AsyncImage(url: URL(string: movie.posterName)) { phase in
+            switch phase {
+            case .success(let image):
+                image
+                    .resizable()
+                    .scaledToFill()
+
+            case .failure(_):
+                Color.gray
+
+            case .empty:
+                ProgressView()
+
+            @unknown default:
+                EmptyView()
+            }
+        }
+        .frame(width: 208, height: 275)
+        .cornerRadius(12)
+        .clipped()
     }
 }

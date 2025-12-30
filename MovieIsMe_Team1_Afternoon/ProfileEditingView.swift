@@ -133,10 +133,6 @@ extension ProfileEditingView {
             .frame(width: 96, height: 96)
             .clipShape(Circle())
 
-//                .resizable()
-//                .scaledToFit()
-//                .frame(width: 90, height: 90)
-//                .foregroundColor(.gray)
 
             if isEditing {
                 Circle()

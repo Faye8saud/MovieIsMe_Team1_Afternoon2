@@ -7,7 +7,7 @@
 
 import SwiftUI
 import Combine
-
+import Foundation
 @MainActor
 
 enum APIConstants {
@@ -17,10 +17,6 @@ enum APIConstants {
     static let apiKey = "pat7E88yW3dgzlY61.2b7d03863aca9f1262dcb772f7728bd157e695799b43c7392d5faf4f52fcb001"
 }
 
-import Foundation
-import Combine
-
-@MainActor
 class UserViewModel: ObservableObject {
 
     // MARK: - Published
@@ -90,6 +86,7 @@ class UserViewModel: ObservableObject {
             SessionManager.saveUserID(record.id) //saves userID
             currentUser = record
             print("✅ Signed in:", record.fields.name)
+           
             return true
         } else {
             errorMessage = "Password is incorrect"

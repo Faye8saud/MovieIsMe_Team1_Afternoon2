@@ -7,7 +7,7 @@
 import SwiftUI
 
 struct CarouselItem: Identifiable {
-    let id = UUID()
+    let id: String
     let imageName: String
     let title: String
     let rating: Double
