@@ -5,21 +5,25 @@
 //  Created by Hissah Alohali on 05/07/1447 AH.
 //
 
-
 import SwiftUI
 
 struct WriteReviewView: View {
-    @State private var navigateToMovieView = false
+    @EnvironmentObject var reviewVM: ReviewViewModel
+    @Environment(\.dismiss) var dismiss
+
+    let movieID: String
+    let userID: String
+
     @State private var reviewText = ""
     @State private var rating = 0
-    @Environment(\.dismiss) var dismiss
-    
+    @State private var errorMessage: String?
+
     var body: some View {
         VStack(spacing: 0) {
             // MARK: - Custom Navigation Bar
             HStack {
                 Button {
-                    navigateToMovieView = true
+                    dismiss()
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
@@ -37,7 +41,7 @@ struct WriteReviewView: View {
                 Spacer()
 
                 Button {
-                    // Add review action
+                    submitReview()
                 } label: {
                     Text("Add")
                         .foregroundColor(.yellowAccent)
@@ -49,7 +53,6 @@ struct WriteReviewView: View {
                 alignment: .bottom
             )
 
-            
             // MARK: - Content
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
@@ -104,6 +107,12 @@ struct WriteReviewView: View {
                             }
                         }
                     }
+
+                    // Error message
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                    }
                     
                     Spacer()
                 }
@@ -113,8 +122,32 @@ struct WriteReviewView: View {
         .background(Color.black.ignoresSafeArea())
         .preferredColorScheme(.dark)
     }
+
+    // MARK: - Submit Review
+    private func submitReview() {
+        guard !reviewText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            errorMessage = "Please enter a review."
+            return
+        }
+        guard rating > 0 else {
+            errorMessage = "Please select a rating."
+            return
+        }
+
+        errorMessage = nil
+
+        reviewVM.selectedStars = rating
+        reviewVM.reviewText = reviewText
+
+        reviewVM.submitReview(movieID: movieID, userID: userID)
+
+        // Dismiss after submission
+        dismiss()
+    }
 }
 
 #Preview {
-    WriteReviewView()
+    // Example preview with dummy IDs
+    WriteReviewView(movieID: "movie123", userID: "user123")
+        .environmentObject(ReviewViewModel())
 }
