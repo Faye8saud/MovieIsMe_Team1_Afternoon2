@@ -89,7 +89,7 @@ struct HeroCarouselView: View {
                             case .success(let image):
                                 image
                                     .resizable()
-                                    .scaledToFill()
+                              //      .scaledToFill()
 
                             case .failure(_):
                                 Color.gray

@@ -81,4 +81,23 @@ extension MovieViewModel {
         }
     }
 }
+extension CarouselItem {
+    func toRecord() -> MovieRecord {
+        MovieRecord(
+            id: self.id,
+            createdTime: "",
+            fields: MovieFields(
+                name: self.title,
+                poster: self.imageName,
+                story: "",
+                runtime: self.duration,
+                genre: [self.genre],
+                rating: "",
+                imdbRating: self.rating * 2,
+                language: []
+            )
+        )
+    }
+}
+
 
