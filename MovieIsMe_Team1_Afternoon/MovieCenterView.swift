@@ -130,8 +130,9 @@ struct MovieCenterView: View {
                                 HeroCarouselView(movies: vm.heroMovies)
                             }
                             
-                            MovieRowView(title: "Drama", movies: vm.dramaMovies)
-                            MovieRowView(title: "Comedy", movies: vm.comedyMovies)
+                            MovieRowView(title: "Drama", movies: vm.heroMovies)
+                            MovieRowView(title: "Comedy", movies: vm.heroMovies)
+
                         }
                     }
                         .padding(.bottom, 20)
@@ -148,6 +149,25 @@ struct MovieCenterView: View {
         .task {
             await vm.fetchMovies()
         }
+    }
+}
+//وسن اضفت
+extension Movie {
+    func toRecord() -> MovieRecord {
+        MovieRecord(
+            id: UUID().uuidString,
+            createdTime: "",
+            fields: MovieFields(
+                name: self.title,
+                poster: self.posterName,      // إذا posterName عندك رابط URL استمري، إذا اسم صورة محلية راح نضبطها تحت
+                story: "",
+                runtime: "",
+                genre: [],
+                rating: "",
+                imdbRating: 0.0,
+                language: []
+            )
+        )
     }
 }
 

@@ -35,7 +35,8 @@ class MovieViewModel: ObservableObject {
                     id: record.id,              // ✅ ADD THIS
                     imageName: record.fields.poster,
                     title: record.fields.name,
-                    rating: record.fields.IMDb_rating / 2,
+//                    rating: record.fields.IMDb_rating / 2,
+                    rating: record.fields.imdbRating / 2,
                     genre: record.fields.genre.first ?? "Unknown",
                     duration: record.fields.runtime
                 )
@@ -80,4 +81,23 @@ extension MovieViewModel {
         }
     }
 }
+extension CarouselItem {
+    func toRecord() -> MovieRecord {
+        MovieRecord(
+            id: self.id,
+            createdTime: "",
+            fields: MovieFields(
+                name: self.title,
+                poster: self.imageName,
+                story: "",
+                runtime: self.duration,
+                genre: [self.genre],
+                rating: "",
+                imdbRating: self.rating * 2,
+                language: []
+            )
+        )
+    }
+}
+
 
