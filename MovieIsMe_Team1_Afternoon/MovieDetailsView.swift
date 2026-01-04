@@ -12,7 +12,13 @@ struct MovieDetailView: View {
     @StateObject private var vm = MovieDetailsViewModel()
     @State private var isBookmarked: Bool = false
     @Environment(\.dismiss) private var dismiss
+    @State private var showShareSheet = false
 
+    @StateObject private var savedVM = SavedMoviesViewModel()
+    private var shareURL: URL {
+        URL(string: "https://www.imdb.com/title/\(movie.id)")!
+    }
+    
     // ✅ الفيلم اللي نعرضه: أولاً من الـNavigation ثم يتحدث من API
     private var displayedMovie: MovieRecord {
         vm.movie ?? movie
@@ -74,7 +80,11 @@ struct MovieDetailView: View {
 
                         Spacer()
 
-                        Button(action: {}) {
+                        ShareLink(
+                            item: shareURL,
+                            subject: Text(displayedMovie.fields.name),
+                            message: Text("Check out \(displayedMovie.fields.name) on IMDb")
+                        ) {
                             Image(systemName: "square.and.arrow.up")
                                 .foregroundColor(.yellow)
                                 .padding(10)
@@ -82,7 +92,12 @@ struct MovieDetailView: View {
                                 .clipShape(Circle())
                         }
 
-                        Button(action: { isBookmarked.toggle() }) {
+                        Button {
+                            Task {
+                                await savedVM.saveMovie(movieID: displayedMovie.id)
+                                isBookmarked = true
+                            }
+                        } label: {
                             Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
                                 .foregroundColor(.yellow)
                                 .padding(10)
@@ -260,8 +275,14 @@ struct MovieDetailView: View {
         .navigationBarHidden(true)
         .task {
             await vm.load(movieId: movie.id)
+            await savedVM.fetchSavedMovies()
+
+    isBookmarked = savedVM.savedMovieIDs.contains(movie.id)
+
         }
+        
     }
+    
 
     // MARK: - Subtle Divider (مثل الصورة)
     private var subtleDivider: some View {
