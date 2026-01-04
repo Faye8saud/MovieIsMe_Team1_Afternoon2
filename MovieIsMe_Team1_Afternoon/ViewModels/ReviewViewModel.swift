@@ -21,7 +21,7 @@ class ReviewViewModel: ObservableObject {
     enum APIConstants {
         static let baseURL = "https://api.airtable.com/v0"
         static let baseID = "appsfcB6YESLj4NCN"
-        static let tableName = "reviews"
+        static let tableName = "Reviews"
         static let apiKey = "pat7E88yW3dgzlY61.2b7d03863aca9f1262dcb772f7728bd157e695799b43c7392d5faf4f52fcb001"
     }
 
@@ -31,21 +31,22 @@ class ReviewViewModel: ObservableObject {
     @Published var reviews: [ReviewRecord] = []
     @Published var errorMessage: String?
 
+    
+
+    
     // MARK: - Fetch Reviews for a Movie
-    func fetchReviews(movieID: String) {
-        Task {
-            do {
-                reviews = try await getReviews(movieID: movieID)
-                print("✅ Reviews fetched:", reviews.count)
-            } catch {
-                errorMessage = error.localizedDescription
-                print("❌ Fetch reviews error:", error)
-            }
+    func fetchReviews(movieID: String) async {
+        do {
+            reviews = try await getReviews(movieID: movieID)
+            print("✅ Reviews fetched:", reviews.count)
+        } catch {
+            errorMessage = error.localizedDescription
+            print("❌ Fetch reviews error:", error)
         }
     }
-
     private func getReviews(movieID: String) async throws -> [ReviewRecord] {
-        let urlString = "\(APIConstants.baseURL)/reviews/\(movieID)"
+        let urlString = "\(APIConstants.baseURL)/\(APIConstants.baseID)/\(APIConstants.tableName)?filterByFormula={movie_id}=\"\(movieID)\""
+
         guard let url = URL(string: urlString) else { throw URLError(.badURL) }
 
         var request = URLRequest(url: url)
@@ -61,24 +62,23 @@ class ReviewViewModel: ObservableObject {
     }
 
     // MARK: - Submit Review
-    func submitReview(movieID: String, userID: String) {
+    func submitReview(movieID: String, userID: String) async {
         guard selectedStars > 0, !reviewText.isEmpty else { return }
 
-        let apiRate = selectedStars * 2 // convert 1–5 stars → 1–10 API rate
+        let apiRate = selectedStars * 2
 
-        Task {
-            do {
-                try await createReview(reviewText: reviewText, rate: apiRate, movieID: movieID, userID: userID)
-                reviewText = ""
-                selectedStars = 0
-                fetchReviews(movieID: movieID)
-                print("✅ Review submitted")
-            } catch {
-                errorMessage = error.localizedDescription
-                print("❌ Submit review error:", error)
-            }
+        do {
+            try await createReview(reviewText: reviewText, rate: apiRate, movieID: movieID, userID: userID)
+            reviewText = ""
+            selectedStars = 0
+            await fetchReviews(movieID: movieID)
+            print("✅ Review submitted")
+        } catch {
+            errorMessage = error.localizedDescription
+            print("❌ Submit review error:", error)
         }
     }
+
 
     private func createReview(reviewText: String, rate: Int, movieID: String, userID: String) async throws {
         let urlString = "\(APIConstants.baseURL)/review"

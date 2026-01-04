@@ -41,7 +41,6 @@ class UserViewModel: ObservableObject {
         fetchUsers()
     }
 
-    // MARK: - Fetch Users
     func fetchUsers() {
         guard let url = URL(string:
             "\(APIConstants.baseURL)/\(APIConstants.baseID)/\(APIConstants.tableName)"
@@ -72,9 +71,13 @@ class UserViewModel: ObservableObject {
                     self.errorMessage = error.localizedDescription
                     print("FETCH ERROR:", error)
                 }
-            } receiveValue: { records in
-                self.users = records
-                print("USERS FETCHED:", records.count)
+            } receiveValue: { records in //to make sure users fetched have both email and password
+                let filteredUsers = records.filter {
+                    !$0.fields.email.isEmpty &&
+                    !$0.fields.password.isEmpty
+                }
+                self.users = filteredUsers
+                print("USERS FETCHED:", filteredUsers.count)
             }
             .store(in: &cancellables)
     }

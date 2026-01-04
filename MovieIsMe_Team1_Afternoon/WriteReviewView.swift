@@ -125,29 +125,33 @@ struct WriteReviewView: View {
 
     // MARK: - Submit Review
     private func submitReview() {
-        guard !reviewText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = "Please enter a review."
-            return
+            guard !reviewText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                errorMessage = "Please enter a review."
+                return
+            }
+            guard rating > 0 else {
+                errorMessage = "Please select a rating."
+                return
+            }
+
+            errorMessage = nil
+            reviewVM.selectedStars = rating
+            reviewVM.reviewText = reviewText
+
+            // Make it async so it waits for API
+            Task {
+                await reviewVM.submitReview(movieID: movieID, userID: userID)
+                reviewVM.fetchReviews(movieID: movieID) // refresh reviews
+                dismiss()
+            }
         }
-        guard rating > 0 else {
-            errorMessage = "Please select a rating."
-            return
-        }
-
-        errorMessage = nil
-
-        reviewVM.selectedStars = rating
-        reviewVM.reviewText = reviewText
-
-        reviewVM.submitReview(movieID: movieID, userID: userID)
-
-        // Dismiss after submission
-        dismiss()
-    }
 }
 
+
 #Preview {
-    // Example preview with dummy IDs
+    // Create a local instance of ReviewViewModel for the preview
+    let reviewVM = ReviewViewModel()
+    
     WriteReviewView(movieID: "movie123", userID: "user123")
-        .environmentObject(ReviewViewModel())
+        .environmentObject(reviewVM)
 }
