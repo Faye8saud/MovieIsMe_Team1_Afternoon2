@@ -12,6 +12,7 @@ class SavedMoviesViewModel: ObservableObject {
     @Published var savedMovieIDs: [String] = []
     @Published var isLoading = false
 
+    // GET Movie
     func fetchSavedMovies() async {
         guard let userID = SessionManager.getUserID() else {
             print("❌ No userID found")
@@ -52,4 +53,53 @@ class SavedMoviesViewModel: ObservableObject {
             print("❌ Saved movies fetch error:", error)
         }
     }
+    
+    //  ADD MOVIE
+      func saveMovie(movieID: String) async {
+          guard let userID = SessionManager.getUserID() else {
+              print("❌ No userID found")
+              return
+          }
+
+          // prevent duplicates
+          if savedMovieIDs.contains(movieID) {
+              print("⚠️ Movie already saved")
+              return
+          }
+
+          let url = URL(string:
+              "https://api.airtable.com/v0/appsfcB6YESLj4NCN/saved_movies"
+          )!
+
+          let body = CreateSavedMovieRequest(
+              fields: .init(
+                  user_id: userID,
+                  movie_id: [movieID]
+              )
+          )
+
+          var request = URLRequest(url: url)
+          request.httpMethod = "POST"
+          request.setValue("Bearer \(APIConstants.apiKey)", forHTTPHeaderField: "Authorization")
+          request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+          request.httpBody = try? JSONEncoder().encode(body)
+
+          do {
+              let (_, response) = try await URLSession.shared.data(for: request)
+
+              guard let httpResponse = response as? HTTPURLResponse,
+                    httpResponse.statusCode == 200 else {
+                  print("❌ Save movie failed")
+                  return
+              }
+
+              // update local state immediately
+              savedMovieIDs.append(movieID)
+              print("✅ Movie saved:", movieID)
+
+          } catch {
+              print("❌ Save movie error:", error)
+          }
+      }
+  
 }
