@@ -19,7 +19,12 @@ final class MovieDetailsViewModel: ObservableObject {
 
 
 
+//    func load(movieId: String) async {
+//        isLoading = true
+//        defer { isLoading = false }
     func load(movieId: String) async {
+        print("🚀 load called with movieId:", movieId)
+
         isLoading = true
         defer { isLoading = false }
 
@@ -37,7 +42,11 @@ final class MovieDetailsViewModel: ObservableObject {
                 queryItems: [
                     URLQueryItem(name: "filterByFormula", value: "{movie_id}=\"\(movieId)\"")
                 ]
+                
             )
+            print("🎭 movieActors count:", movieActors.records.count)
+            print("🎭 actor ids from pivot:", movieActors.records.map { $0.fields.actor_id })
+
             let actorIds = Set(movieActors.records.map { $0.fields.actor_id })
 
             // 3) actors -> filter + map to UI Actor
@@ -59,6 +68,8 @@ final class MovieDetailsViewModel: ObservableObject {
                     URLQueryItem(name: "filterByFormula", value: "{movie_id}=\"\(movieId)\"")
                 ]
             )
+            print("🎬 movieDirectors count:", movieDirectors.records.count)
+            print("🎬 movieDirectors records:", movieDirectors.records)
 
             guard let directorId = movieDirectors.records.first?.fields.director_id else {
                 self.director = nil
@@ -66,6 +77,16 @@ final class MovieDetailsViewModel: ObservableObject {
             }
 
             // 5) directors -> find + map to UI Director
+//            let allDirectors: DirectorsResponse = try await APIClient.shared.fetch("directors")
+//            if let match = allDirectors.records.first(where: { $0.id == directorId }) {
+//                self.director = Director(
+//                    id: match.id,
+//                    name: match.fields.name,
+//                    imageURL: URL(string: match.fields.image)
+//                )
+//            } else {
+//                self.director = nil
+//            }
             let allDirectors: DirectorsResponse = try await APIClient.shared.fetch("directors")
             if let match = allDirectors.records.first(where: { $0.id == directorId }) {
                 self.director = Director(
@@ -73,9 +94,15 @@ final class MovieDetailsViewModel: ObservableObject {
                     name: match.fields.name,
                     imageURL: URL(string: match.fields.image)
                 )
+
+                print("✅ Director name:", self.director?.name ?? "nil")
+                print("✅ Director imageURL:", self.director?.imageURL?.absoluteString ?? "nil")
+
             } else {
                 self.director = nil
+                print("❌ Director not found")
             }
+
 
         } catch {
             print("MovieDetailsViewModel error:", error)
