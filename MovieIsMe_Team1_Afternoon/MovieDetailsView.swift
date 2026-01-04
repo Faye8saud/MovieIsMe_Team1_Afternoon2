@@ -40,15 +40,20 @@ struct MovieDetailView: View {
                                         .foregroundColor(.white.opacity(0.5))
                                 )
                         }
-                        .frame(height: 420)
+                        .frame(width: UIScreen.main.bounds.width, height: 420)
                         .clipped()
+
+//                        .frame(height: 420)
+//                        .clipped()
 
                         LinearGradient(
                             colors: [.clear, .black.opacity(0.85)],
                             startPoint: .center,
                             endPoint: .bottom
                         )
+                        .frame(maxWidth: .infinity)   // ✅ أضيفيها هنا
                         .frame(height: 420)
+//                        .frame(height: 420)
 
                         Text(displayedMovie.fields.name)
                             .font(.system(size: 32, weight: .bold))
@@ -203,7 +208,51 @@ struct MovieDetailView: View {
                         .padding(.vertical, 4)
                     }
                 }
+//                من هنا
+                subtleDivider
 
+                // MARK: - Rating & Reviews
+                section(title: "Rating & Reviews") {
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("4.8")
+                            .font(.system(size: 36, weight: .bold))
+                            .foregroundColor(.white.opacity(0.6))
+
+                        Text("out of 5")
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                    .padding(.bottom, 8)
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 14) {
+                            ForEach(sampleReviews) { review in
+                                ReviewCardView(review: review)
+                            }
+                        }
+                        .padding(.vertical, 6)
+                    }
+
+                    Button(action: {
+                        // لاحقًا: افتحي sheet لكتابة Review
+                    }) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "square.and.pencil")
+                            Text("Write a review")
+                                .font(.system(size: 16, weight: .semibold))
+                        }
+                        .foregroundColor(.yellow)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.yellow, lineWidth: 1)
+                        )
+                    }
+                    .padding(.top, 8)
+                }
+//من هنا
                 Spacer(minLength: 40)
             }
         }
@@ -258,6 +307,68 @@ struct InfoText: View {
         }
     }
 }
+//من هنا
+// MARK: - Review Model
+struct ReviewModel: Identifiable {
+    let id = UUID()
+    let name: String
+    let rating: Int // 0...5
+    let text: String
+    let date: String
+}
+
+// MARK: - Review Card
+struct ReviewCardView: View {
+    let review: ReviewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(Color.gray.opacity(0.35))
+                    .frame(width: 36, height: 36)
+                    .overlay(
+                        Image(systemName: "person.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.5))
+                    )
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(review.name)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white)
+
+                    HStack(spacing: 2) {
+                        ForEach(0..<5, id: \.self) { i in
+                            Image(systemName: i < review.rating ? "star.fill" : "star")
+                                .font(.system(size: 12))
+                                .foregroundColor(.yellow)
+                        }
+                    }
+                }
+            }
+
+            Text(review.text)
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.8))
+                .lineLimit(4)
+                .lineSpacing(3)
+
+            Spacer(minLength: 0)
+
+            Text(review.date)
+                .font(.system(size: 12))
+                .foregroundColor(.white.opacity(0.45))
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding(16)
+        .frame(width: 320, height: 160) // ✅ حجم ثابت للكرت
+        .background(Color.white.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+}
+//من هنا
 #Preview {
     MovieDetailView(movie: previewMovie)
 }
@@ -277,3 +388,23 @@ let previewMovie = MovieRecord(
         language: ["English"]
     )
 )
+private let sampleReviews: [ReviewModel] = [
+    ReviewModel(
+        name: "Afnan Abdullah",
+        rating: 5,
+        text: "This is an engagingly simple, good-hearted film, with just enough darkness around the edges to give contrast and relief.",
+        date: "Tuesday"
+    ),
+    ReviewModel(
+        name: "Sara",
+        rating: 4,
+        text: "Great performances and a solid story. Worth watching.",
+        date: "Monday"
+    ),
+    ReviewModel(
+        name: "Noura",
+        rating: 5,
+        text: "Loved it. Emotional and well made.",
+        date: "Sunday"
+    )
+]
