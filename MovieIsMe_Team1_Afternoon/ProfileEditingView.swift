@@ -13,6 +13,9 @@ struct ProfileEditingView: View {
     
     @State private var draftFirstName = ""
     @State private var draftLastName = ""
+    
+    //error handeling
+    @State private var showNameWarning = false
 
     // MARK: - Body
     var body: some View {
@@ -90,16 +93,26 @@ extension ProfileEditingView {
 
             Button {
                 if isEditing {
-                    // ✅ Save changes
+                    // ✅ Trim spaces
+                    let first = draftFirstName.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let last = draftLastName.trimmingCharacters(in: .whitespacesAndNewlines)
+
+                    // ❌ Validation
+                    guard !first.isEmpty, !last.isEmpty else {
+                        showNameWarning = true
+                        return
+                    }
+
+                    // ✅ Save
                     userViewModel.updateProfile(
-                            firstName: draftFirstName,
-                            lastName: draftLastName
-                        )
-                        isEditing = false
+                        firstName: first,
+                        lastName: last
+                    )
+
+                    showNameWarning = false
+                    isEditing = false
+
                 } else {
-                    // Enter edit mode
-//                    draftFirstName = firstName
-//                    draftLastName = lastName
                     isEditing = true
                 }
             } label: {
@@ -148,20 +161,29 @@ extension ProfileEditingView {
 
     // MARK: Profile Fields
     private var profileFields: some View {
-        VStack(spacing: 0) {
-            profileRow(title: "First name", text: $draftFirstName)
-
-
-            Rectangle()
-                .fill(Color.white.opacity(0.3))
-                .frame(height: 1)
-                .padding(.horizontal, 8)
-
-            profileRow(title: "Last name", text: $draftLastName)
+        VStack{
+            VStack(spacing: 0) {
+                profileRow(title: "First name", text: $draftFirstName)
+                
+                
+                Rectangle()
+                    .fill(Color.white.opacity(0.3))
+                    .frame(height: 1)
+                    .padding(.horizontal, 8)
+                
+                profileRow(title: "Last name", text: $draftLastName)
+            }
+            .background(Color(white: 0.15))
+            .cornerRadius(8)
+            .padding(.horizontal, 16)
+            
+            if showNameWarning {
+                Text("First name and last name cannot be empty")
+                    .foregroundColor(.red)
+                    .font(.footnote)
+                    .padding(.top, 8)
+            }
         }
-        .background(Color(white: 0.15))
-        .cornerRadius(8)
-        .padding(.horizontal, 16)
     }
 
     // MARK: Sign Out
