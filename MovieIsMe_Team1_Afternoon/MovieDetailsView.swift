@@ -7,16 +7,26 @@
 
 import SwiftUI
 
+
 struct MovieDetailView: View {
     let movie: MovieRecord
+    @EnvironmentObject var userViewModel: UserViewModel
+    @StateObject private var reviewVM: ReviewViewModel
     @StateObject private var vm = MovieDetailsViewModel()
     @State private var isBookmarked: Bool = false
     @Environment(\.dismiss) private var dismiss
     @State private var showShareSheet = false
+    @State private var writeReview = false
 
     @StateObject private var savedVM = SavedMoviesViewModel()
     private var shareURL: URL {
         URL(string: "https://www.imdb.com/title/\(movie.id)")!
+    }
+    
+    // Custom initializer to inject ReviewViewModel for previews and usage
+    init(movie: MovieRecord, reviewVM: ReviewViewModel) {
+        self.movie = movie
+        _reviewVM = StateObject(wrappedValue: reviewVM)
     }
     
     // ✅ الفيلم اللي نعرضه: أولاً من الـNavigation ثم يتحدث من API
@@ -242,16 +252,22 @@ struct MovieDetailView: View {
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 14) {
-                            ForEach(sampleReviews) { review in
+                            ForEach(reviewVM.reviews) { review in
                                 ReviewCardView(review: review)
                             }
                         }
                         .padding(.vertical, 6)
                     }
 
-                    Button(action: {
-                        // لاحقًا: افتحي sheet لكتابة Review
-                    }) {
+                    // Write Review Button
+                    NavigationLink(
+                        destination: WriteReviewView(
+                            movieID: movie.id,
+                            userID: userID ?? ""
+                        )
+                        .environmentObject(reviewVM),
+                        isActive: $writeReview
+                    ) {
                         HStack(spacing: 10) {
                             Image(systemName: "square.and.pencil")
                             Text("Write a review")
@@ -265,25 +281,33 @@ struct MovieDetailView: View {
                                 .stroke(Color.yellow, lineWidth: 1)
                         )
                     }
+                    .disabled(userID == nil) // disable if user is not logged in
                     .padding(.top, 8)
                 }
-//من هنا
-                Spacer(minLength: 40)
+
             }
+//من هنا
+            Spacer(minLength: 40)
         }
         .background(Color.black.ignoresSafeArea())
         .navigationBarHidden(true)
+        .task(id: movie.id) {
+            print("Fetching reviews for movieID:", movie.id)
+            await reviewVM.fetchReviews(movieID: movie.id)
+        }
         .task {
             await vm.load(movieId: movie.id)
             await savedVM.fetchSavedMovies()
 
-    isBookmarked = savedVM.savedMovieIDs.contains(movie.id)
+            isBookmarked = savedVM.savedMovieIDs.contains(movie.id)
 
         }
-        
     }
     
-
+    private var userID: String? {
+        userViewModel.currentUser?.id
+    }
+    
     // MARK: - Subtle Divider (مثل الصورة)
     private var subtleDivider: some View {
         Rectangle()
@@ -328,41 +352,60 @@ struct InfoText: View {
         }
     }
 }
-//من هنا
-// MARK: - Review Model
-struct ReviewModel: Identifiable {
-    let id = UUID()
-    let name: String
-    let rating: Int // 0...5
-    let text: String
-    let date: String
-}
+
+// MARK: - Review Card
+//
+//  ReviewCardView.swift
+//  MovieIsMe_Team1_Afternoon
+//
+//  Created by Hissah Alohali on 15/07/1447 AH.
+//
+
 
 // MARK: - Review Card
 struct ReviewCardView: View {
-    let review: ReviewModel
+    let review: ReviewRecord
+
+    private var stars: Int {
+        review.fields.rate / 2 // convert 10 → 5 stars
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
 
+            // MARK: User + Rating
             HStack(spacing: 10) {
-                Circle()
-                    .fill(Color.gray.opacity(0.35))
+                
+                // Profile Image
+                if let imageUrlString = review.fields.user_profile_image,
+                   let imageURL = URL(string: imageUrlString) {
+                    AsyncImage(url: imageURL) { img in
+                        img.resizable().scaledToFill()
+                    } placeholder: {
+                        Circle().fill(Color.gray.opacity(0.35))
+                    }
                     .frame(width: 36, height: 36)
-                    .overlay(
-                        Image(systemName: "person.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.5))
-                    )
+                    .clipShape(Circle())
+                } else {
+                    Circle()
+                        .fill(Color.gray.opacity(0.35))
+                        .frame(width: 36, height: 36)
+                        .overlay(
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.white.opacity(0.5))
+                        )
+                }
 
+                // User Name + Stars
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(review.name)
+                    Text(review.fields.user_name ?? "Anonymous")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white)
 
                     HStack(spacing: 2) {
                         ForEach(0..<5, id: \.self) { i in
-                            Image(systemName: i < review.rating ? "star.fill" : "star")
+                            Image(systemName: i < stars ? "star.fill" : "star")
                                 .font(.system(size: 12))
                                 .foregroundColor(.yellow)
                         }
@@ -370,7 +413,8 @@ struct ReviewCardView: View {
                 }
             }
 
-            Text(review.text)
+            // MARK: Review Text
+            Text(review.fields.review_text)
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.8))
                 .lineLimit(4)
@@ -378,21 +422,28 @@ struct ReviewCardView: View {
 
             Spacer(minLength: 0)
 
-            Text(review.date)
+            // MARK: Date
+            Text(review.createdTime.prefix(10)) // simple formatting
                 .font(.system(size: 12))
                 .foregroundColor(.white.opacity(0.45))
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(16)
-        .frame(width: 320, height: 160) // ✅ حجم ثابت للكرت
+        .frame(width: 320, height: 160)
         .background(Color.white.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }
-//من هنا
+
 #Preview {
-    MovieDetailView(movie: previewMovie)
+    let reviewVM = ReviewViewModel() // create a local instance
+    let userVM = UserViewModel()     // if MovieDetailView uses userViewModel
+    NavigationStack {
+        MovieDetailView(movie: previewMovie, reviewVM: reviewVM)
+            .environmentObject(userVM)
+    }
 }
+
 
 // MARK: - Preview Mock Movie
 let previewMovie = MovieRecord(
@@ -409,23 +460,24 @@ let previewMovie = MovieRecord(
         language: ["English"]
     )
 )
-private let sampleReviews: [ReviewModel] = [
-    ReviewModel(
-        name: "Afnan Abdullah",
-        rating: 5,
-        text: "This is an engagingly simple, good-hearted film, with just enough darkness around the edges to give contrast and relief.",
-        date: "Tuesday"
-    ),
-    ReviewModel(
-        name: "Sara",
-        rating: 4,
-        text: "Great performances and a solid story. Worth watching.",
-        date: "Monday"
-    ),
-    ReviewModel(
-        name: "Noura",
-        rating: 5,
-        text: "Loved it. Emotional and well made.",
-        date: "Sunday"
-    )
-]
+//private let sampleReviews: [ReviewRecord] = [
+//    ReviewRecord(
+//        name: "Afnan Abdullah",
+//        rating: 5,
+//        text: "This is an engagingly simple, good-hearted film, with just enough darkness around the edges to give contrast and relief.",
+//        date: "Tuesday"
+//    ),
+//    ReviewModel(
+//        name: "Sara",
+//        rating: 4,
+//        text: "Great performances and a solid story. Worth watching.",
+//        date: "Monday"
+//    ),
+//    ReviewModel(
+//        name: "Noura",
+//        rating: 5,
+//        text: "Loved it. Emotional and well made.",
+//        date: "Sunday"
+//    )
+//]
+

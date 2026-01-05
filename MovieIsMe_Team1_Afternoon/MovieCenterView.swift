@@ -11,6 +11,7 @@ import SwiftUI
 
 struct MovieCenterView: View {
     @EnvironmentObject var userViewModel: UserViewModel
+    @EnvironmentObject var reviewVM: ReviewViewModel
     @State private var searchText = ""
     @State private var navigateToProfile = false
 
@@ -22,7 +23,6 @@ struct MovieCenterView: View {
     
     
     var body: some View {
-        NavigationStack {
             ZStack {
                 Color.black.ignoresSafeArea()
                 
@@ -127,7 +127,6 @@ struct MovieCenterView: View {
                         .padding(.bottom, 20)
                 }
             }
-        }
         .onAppear {
             if let userID = SessionManager.getUserID() {
                 print("🎬 MovieCenterView userID:", userID)
