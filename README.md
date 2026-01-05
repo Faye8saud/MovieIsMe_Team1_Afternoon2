@@ -46,6 +46,44 @@ The app uses **Airtable as a backend**, follows **MVVM architecture**, and lever
 - **ShareLink (iOS Share Sheet)**
 
 ---
+## 🛠️  Main CRUD Operations
+---
+
+### 📖 READ (GET)
+
+Used to retrieve data from the backend and display it in the application.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/movies` | Retrieve all movies |
+| GET | `/actors` | Retrieve all actors |
+| GET | `/directors` | Retrieve all directors |
+| GET | `/reviews/:movie_id` | Retrieve reviews for a specific movie |
+| GET | `/users` | Retrieve all users |
+| GET | `/saved_movies` | Retrieve saved (bookmarked) movies for a user |
+
+---
+
+### ➕ CREATE (POST)
+
+Used when users create new content in the app.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/review` | Create a new movie review |
+| POST | `/saved_movies` | Save (bookmark) a movie for a specific user |
+
+---
+
+### ✏️ UPDATE (PUT)
+
+Used to update existing records.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| PUT | `/user/:id` | Update user profile information |
+
+---
 
 ## 🧱 Architecture Overview
 
