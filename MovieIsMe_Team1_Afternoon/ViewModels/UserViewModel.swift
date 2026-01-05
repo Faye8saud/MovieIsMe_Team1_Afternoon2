@@ -75,6 +75,7 @@ class UserViewModel: ObservableObject {
 
     // MARK: - Sign In
     func signIn(email: String, password: String) -> Bool {
+        print("Users loaded:", users.count)
         let trimmedEmail = email
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
@@ -90,22 +91,23 @@ class UserViewModel: ObservableObject {
                 .trimmingCharacters(in: .whitespacesAndNewlines)
                 .lowercased() == trimmedEmail
         }) else {
-            errorMessage = "Email not found"
             signInError = .email
+            errorMessage = "Email is invalid"
             return false
         }
 
-        if record.fields.password == trimmedPassword {
-            SessionManager.saveUserID(record.id)
-            currentUser = record
-            print("✅ Signed in:", record.fields.name)
-            return true
-        } else {
-            errorMessage = "Password is incorrect"
+        guard record.fields.password == trimmedPassword else {
             signInError = .password
+            errorMessage = "Password is invalid"
             return false
         }
+
+        // ✅ success
+        SessionManager.saveUserID(record.id)
+        currentUser = record
+        return true
     }
+
 
 
     func updateUser(recordID: String, user: User) async throws {

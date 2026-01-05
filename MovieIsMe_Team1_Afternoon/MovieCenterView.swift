@@ -134,6 +134,7 @@ struct MovieCenterView: View {
                 print("❌ No userID found in MovieCenterView")
             }
         }
+        .navigationBarBackButtonHidden(true)
         .task {
             await vm.fetchMovies()
         }
@@ -193,4 +194,5 @@ var body: some View {
 #Preview {
     MovieCenterView()
         .environmentObject(UserViewModel())
+        .environmentObject(ReviewViewModel())
 }
