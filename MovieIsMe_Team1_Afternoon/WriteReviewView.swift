@@ -9,7 +9,7 @@ import SwiftUI
 
 struct WriteReviewView: View {
     @EnvironmentObject var reviewVM: ReviewViewModel
-    @Environment(\.dismiss) var dismiss
+    @Environment(\.dismiss) private var dismiss
 
     let movieID: String
     let userID: String
@@ -20,138 +20,136 @@ struct WriteReviewView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // MARK: - Custom Navigation Bar
-            HStack {
-                Button {
-                    dismiss()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                        Text("Back")
-                    }
-                    .foregroundColor(.yellowAccent)
-                }
-
-                Spacer()
-
-                Text("Write a review")
-                    .font(.headline)
-                    .foregroundColor(.white)
-
-                Spacer()
-
-                Button {
-                    submitReview()
-                } label: {
-                    Text("Add")
-                        .foregroundColor(.yellowAccent)
-                }
-            }
-            .padding()
-            .overlay(
-                Divider().background(Color.white.opacity(0.1)),
-                alignment: .bottom
-            )
-
-            // MARK: - Content
+            navigationBar
+            
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    // Review Section
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Review")
-                            .foregroundColor(.seconderyText)
-                            .font(.system(size: 18, weight: .medium))
-                        
-                        TextEditor(text: $reviewText)
-                            .foregroundColor(.white)
-                            .font(.system(size: 18))
-                            .scrollContentBackground(.hidden)
-                            .frame(height: 146)
-                            .padding(12)
-                            .background(Color(white: 0.15))
-                            .cornerRadius(8)
-                            .overlay(
-                                Group {
-                                    if reviewText.isEmpty {
-                                        Text("Enter your review")
-                                            .foregroundColor(.gray)
-                                            .font(.system(size: 17))
-                                            .padding(.leading, 16)
-                                            .padding(.top, 20)
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                                            .allowsHitTesting(false)
-                                    }
-                                }
-                            )
-                    }
+                    reviewSection
+                    ratingSection
                     
-                    // Rating Section
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Text("Rating")
-                                .foregroundColor(.seconderyText)
-                                .font(.system(size: 18, weight: .medium))
-                            
-                            Spacer()
-                            
-                            HStack(spacing: 3) {
-                                ForEach(1...5, id: \.self) { star in
-                                    Button {
-                                        rating = star
-                                    } label: {
-                                        Image(systemName: star <= rating ? "star.fill" : "star")
-                                            .font(.system(size: 21))
-                                            .foregroundColor(.yellowAccent)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Error message
                     if let errorMessage {
                         Text(errorMessage)
                             .foregroundColor(.red)
+                            .font(.system(size: 14))
                     }
-                    
-                    Spacer()
                 }
                 .padding(24)
             }
         }
         .background(Color.black.ignoresSafeArea())
-        .preferredColorScheme(.dark)
+        .navigationBarHidden(true)
     }
-
-    // MARK: - Submit Review
-    private func submitReview() {
-            guard !reviewText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                errorMessage = "Please enter a review."
-                return
+    
+    //Navigation Bar
+    private var navigationBar: some View {
+        HStack {
+            Button(action: { dismiss() }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.left")
+                    Text("Back")
+                }
+                .foregroundColor(.yellowAccent)
             }
-            guard rating > 0 else {
-                errorMessage = "Please select a rating."
-                return
-            }
 
-            errorMessage = nil
-            reviewVM.selectedStars = rating
-            reviewVM.reviewText = reviewText
+            Spacer()
 
-            // Make it async so it waits for API
-            Task {
-                await reviewVM.submitReview(movieID: movieID, userID: userID)
-                reviewVM.fetchReviews(movieID: movieID) // refresh reviews
-                dismiss()
+            Text("Write a review")
+                .font(.headline)
+                .foregroundColor(.white)
+
+            Spacer()
+
+            Button(action: submitReview) {
+                Text("Add")
+                    .foregroundColor(.yellowAccent)
             }
         }
+        .padding()
+        .overlay(
+            Divider().background(Color.white.opacity(0.1)),
+            alignment: .bottom
+        )
+    }
+    
+    //Review Section
+    private var reviewSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Review")
+                .foregroundColor(.seconderyText)
+                .font(.system(size: 18, weight: .medium))
+            
+            ZStack(alignment: .topLeading) {
+                TextEditor(text: $reviewText)
+                    .foregroundColor(.white)
+                    .font(.system(size: 18))
+                    .scrollContentBackground(.hidden)
+                    .frame(height: 146)
+                    .padding(12)
+                    .background(Color(white: 0.15))
+                    .cornerRadius(8)
+                
+                if reviewText.isEmpty {
+                    Text("Enter your review")
+                        .foregroundColor(.gray)
+                        .font(.system(size: 17))
+                        .padding(.leading, 16)
+                        .padding(.top, 20)
+                        .allowsHitTesting(false)
+                }
+            }
+        }
+    }
+    
+    //Rating Section (stars)
+    private var ratingSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Rating")
+                    .foregroundColor(.seconderyText)
+                    .font(.system(size: 18, weight: .medium))
+                
+                Spacer()
+                
+                HStack(spacing: 3) {
+                    ForEach(1...5, id: \.self) { star in
+                        Button {
+                            rating = star
+                        } label: {
+                            Image(systemName: star <= rating ? "star.fill" : "star")
+                                .font(.system(size: 21))
+                                .foregroundColor(.yellowAccent)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    //Submit Review
+    private func submitReview() {
+        guard !reviewText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            errorMessage = "Please enter a review."
+            return
+        }
+        
+        guard rating > 0 else {
+            errorMessage = "Please select a rating."
+            return
+        }
+
+        errorMessage = nil
+        
+        Task {
+            await reviewVM.submitReview(movieID: movieID, userID: userID)
+            dismiss()
+        }
+    }
 }
 
-
+// Preview
 #Preview {
-    // Create a local instance of ReviewViewModel for the preview
     let reviewVM = ReviewViewModel()
     
-    WriteReviewView(movieID: "movie123", userID: "user123")
+    WriteReviewView(movieID: "movie123", userID: "user123")//for testing
         .environmentObject(reviewVM)
 }

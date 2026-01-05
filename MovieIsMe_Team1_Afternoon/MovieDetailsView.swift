@@ -11,7 +11,7 @@ import SwiftUI
 struct MovieDetailView: View {
     let movie: MovieRecord
     @EnvironmentObject var userViewModel: UserViewModel
-    @EnvironmentObject var reviewVM: ReviewViewModel
+    @StateObject private var reviewVM: ReviewViewModel
     @StateObject private var vm = MovieDetailsViewModel()
     @State private var isBookmarked: Bool = false
     @Environment(\.dismiss) private var dismiss
@@ -21,6 +21,12 @@ struct MovieDetailView: View {
     @StateObject private var savedVM = SavedMoviesViewModel()
     private var shareURL: URL {
         URL(string: "https://www.imdb.com/title/\(movie.id)")!
+    }
+    
+    // Custom initializer to inject ReviewViewModel for previews and usage
+    init(movie: MovieRecord, reviewVM: ReviewViewModel) {
+        self.movie = movie
+        _reviewVM = StateObject(wrappedValue: reviewVM)
     }
     
     // ✅ الفيلم اللي نعرضه: أولاً من الـNavigation ثم يتحدث من API
@@ -279,28 +285,29 @@ struct MovieDetailView: View {
                     .padding(.top, 8)
                 }
 
-                }
-//من هنا
-                Spacer(minLength: 40)
             }
+//من هنا
+            Spacer(minLength: 40)
+        }
         .background(Color.black.ignoresSafeArea())
         .navigationBarHidden(true)
-        .onAppear {
-            reviewVM.fetchReviews(movieID: movie.id)
+        .task(id: movie.id) {
+            print("Fetching reviews for movieID:", movie.id)
+            await reviewVM.fetchReviews(movieID: movie.id)
         }
         .task {
             await vm.load(movieId: movie.id)
             await savedVM.fetchSavedMovies()
 
-    isBookmarked = savedVM.savedMovieIDs.contains(movie.id)
+            isBookmarked = savedVM.savedMovieIDs.contains(movie.id)
 
         }
-        }
+    }
     
     private var userID: String? {
         userViewModel.currentUser?.id
     }
-    }
+    
     // MARK: - Subtle Divider (مثل الصورة)
     private var subtleDivider: some View {
         Rectangle()
@@ -325,6 +332,7 @@ struct MovieDetailView: View {
         .padding(.horizontal, 20)
         .padding(.top, 24)
     }
+}
 
 // MARK: - InfoText
 struct InfoText: View {
@@ -344,16 +352,6 @@ struct InfoText: View {
         }
     }
 }
-
-//من هنا
-//// MARK: - Review Model
-//struct ReviewModel: Identifiable {
-//    let id = UUID()
-//    let name: String
-//    let rating: Int // 0...5
-//    let text: String
-//    let date: String
-//}
 
 // MARK: - Review Card
 //
@@ -375,17 +373,31 @@ struct ReviewCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            // User + Rating
+            // MARK: User + Rating
             HStack(spacing: 10) {
-                Circle()
-                    .fill(Color.gray.opacity(0.35))
+                
+                // Profile Image
+                if let imageUrlString = review.fields.user_profile_image,
+                   let imageURL = URL(string: imageUrlString) {
+                    AsyncImage(url: imageURL) { img in
+                        img.resizable().scaledToFill()
+                    } placeholder: {
+                        Circle().fill(Color.gray.opacity(0.35))
+                    }
                     .frame(width: 36, height: 36)
-                    .overlay(
-                        Image(systemName: "person.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.5))
-                    )
+                    .clipShape(Circle())
+                } else {
+                    Circle()
+                        .fill(Color.gray.opacity(0.35))
+                        .frame(width: 36, height: 36)
+                        .overlay(
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.white.opacity(0.5))
+                        )
+                }
 
+                // User Name + Stars
                 VStack(alignment: .leading, spacing: 4) {
                     Text(review.fields.user_name ?? "Anonymous")
                         .font(.system(size: 14, weight: .semibold))
@@ -401,7 +413,7 @@ struct ReviewCardView: View {
                 }
             }
 
-            // Review text
+            // MARK: Review Text
             Text(review.fields.review_text)
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.8))
@@ -410,7 +422,7 @@ struct ReviewCardView: View {
 
             Spacer(minLength: 0)
 
-            // Date
+            // MARK: Date
             Text(review.createdTime.prefix(10)) // simple formatting
                 .font(.system(size: 12))
                 .foregroundColor(.white.opacity(0.45))
@@ -423,13 +435,11 @@ struct ReviewCardView: View {
     }
 }
 
-//من هنا
 #Preview {
     let reviewVM = ReviewViewModel() // create a local instance
     let userVM = UserViewModel()     // if MovieDetailView uses userViewModel
     NavigationStack {
-        MovieDetailView(movie: previewMovie)
-            .environmentObject(reviewVM)
+        MovieDetailView(movie: previewMovie, reviewVM: reviewVM)
             .environmentObject(userVM)
     }
 }
@@ -450,8 +460,8 @@ let previewMovie = MovieRecord(
         language: ["English"]
     )
 )
-//private let sampleReviews: [ReviewModel] = [
-//    ReviewModel(
+//private let sampleReviews: [ReviewRecord] = [
+//    ReviewRecord(
 //        name: "Afnan Abdullah",
 //        rating: 5,
 //        text: "This is an engagingly simple, good-hearted film, with just enough darkness around the edges to give contrast and relief.",
@@ -470,3 +480,4 @@ let previewMovie = MovieRecord(
 //        date: "Sunday"
 //    )
 //]
+
