@@ -85,4 +85,4 @@ The app follows the **MVVM (Model–View–ViewModel)** pattern.
 
 - [Fay](https://github.com/Faye8saud)
 - [Hissah](https://github.com/hessah404)
-- [Wasan](https://github.com/wasan)
+- [Wasan](https://github.com/itWasan7)
