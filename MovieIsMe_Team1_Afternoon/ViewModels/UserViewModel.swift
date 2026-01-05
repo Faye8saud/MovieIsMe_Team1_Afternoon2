@@ -10,12 +10,6 @@ import Combine
 import Foundation
 @MainActor
 
-enum APIConstants {
-    static let baseURL = "https://api.airtable.com/v0"
-    static let baseID = "appsfcB6YESLj4NCN"
-    static let tableName = "users"
-    static let apiKey = "pat7E88yW3dgzlY61.2b7d03863aca9f1262dcb772f7728bd157e695799b43c7392d5faf4f52fcb001"
-}
 
 enum SignInError {
     case email
@@ -41,11 +35,12 @@ class UserViewModel: ObservableObject {
         fetchUsers()
     }
 
+    // MARK: - Fetch Users
     func fetchUsers() {
-        guard let url = URL(string:
-            "\(APIConstants.baseURL)/\(APIConstants.baseID)/\(APIConstants.tableName)"
+        guard let url = APIConstants.url(
+            for: APIConstants.Tables.users
         ) else {
-            print("Invalid URL")
+            print("Invalid users URL")
             return
         }
 
@@ -69,15 +64,11 @@ class UserViewModel: ObservableObject {
             .sink { completion in
                 if case let .failure(error) = completion {
                     self.errorMessage = error.localizedDescription
-                    print("FETCH ERROR:", error)
+                    print("❌ FETCH USERS ERROR:", error)
                 }
-            } receiveValue: { records in //to make sure users fetched have both email and password
-                let filteredUsers = records.filter {
-                    !$0.fields.email.isEmpty &&
-                    !$0.fields.password.isEmpty
-                }
-                self.users = filteredUsers
-                print("USERS FETCHED:", filteredUsers.count)
+            } receiveValue: { records in
+                self.users = records
+                print("✅ USERS FETCHED:", records.count)
             }
             .store(in: &cancellables)
     }
@@ -117,18 +108,21 @@ class UserViewModel: ObservableObject {
     }
 
 
-    func updateUser(recordID: String,user: User) async throws {
+    func updateUser(recordID: String, user: User) async throws {
 
-        let urlString =
-            "\(APIConstants.baseURL)/\(APIConstants.baseID)/\(APIConstants.tableName)/\(recordID)"
-
-        guard let url = URL(string: urlString) else {
+        guard let url = APIConstants.recordURL(
+            table: APIConstants.Tables.users,
+            recordID: recordID
+        ) else {
             throw URLError(.badURL)
         }
 
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
-        request.setValue("Bearer \(APIConstants.apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue(
+            "Bearer \(APIConstants.apiKey)",
+            forHTTPHeaderField: "Authorization"
+        )
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         let body: [String: Any] = [
@@ -149,6 +143,7 @@ class UserViewModel: ObservableObject {
             throw URLError(.badServerResponse)
         }
     }
+
 
 
     // MARK: - Update Profile
