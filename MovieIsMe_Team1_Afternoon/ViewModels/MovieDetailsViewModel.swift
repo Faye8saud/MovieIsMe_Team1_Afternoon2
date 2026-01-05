@@ -76,17 +76,7 @@ final class MovieDetailsViewModel: ObservableObject {
                 return
             }
 
-            // 5) directors -> find + map to UI Director
-//            let allDirectors: DirectorsResponse = try await APIClient.shared.fetch("directors")
-//            if let match = allDirectors.records.first(where: { $0.id == directorId }) {
-//                self.director = Director(
-//                    id: match.id,
-//                    name: match.fields.name,
-//                    imageURL: URL(string: match.fields.image)
-//                )
-//            } else {
-//                self.director = nil
-//            }
+ 
             let allDirectors: DirectorsResponse = try await APIClient.shared.fetch("directors")
             if let match = allDirectors.records.first(where: { $0.id == directorId }) {
                 self.director = Director(

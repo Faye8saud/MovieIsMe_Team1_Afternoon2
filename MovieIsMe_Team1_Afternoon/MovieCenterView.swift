@@ -20,17 +20,6 @@ struct MovieCenterView: View {
         vm.searchResults(for: searchText)
     }
     
-    let dramaMovies = [
-        Movie(title: "The Shawshank Redemption", posterName: "poster1"),
-        Movie(title: "A Star Is Born", posterName: "poster2"),
-        Movie(title: "A Star Is", posterName: "poster1")
-    ]
-    
-    let comedyMovies = [
-        Movie(title: "World's Greatest Dad", posterName: "poster2"),
-        Movie(title: "House Party", posterName: "poster1"),
-        Movie(title: "House", posterName: "poster1")
-    ]
     
     var body: some View {
         NavigationStack {
@@ -130,8 +119,8 @@ struct MovieCenterView: View {
                                 HeroCarouselView(movies: vm.heroMovies)
                             }
                             
-                            MovieRowView(title: "Drama", movies: vm.heroMovies)
-                            MovieRowView(title: "Comedy", movies: vm.heroMovies)
+                            MovieRowView(title: "Drama", movies: vm.dramaCarouselItems)
+                            MovieRowView(title: "Comedy", movies: vm.comedyCarouselItems)
 
                         }
                     }
