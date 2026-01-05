@@ -172,75 +172,42 @@ class ReviewViewModel: ObservableObject {
     }
     //POST review
     func submitReview(movieID: String, userID: String) async {
-        guard !reviewText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = ReviewError.emptyReview.errorDescription
-            return
-        }
-        
-        guard selectedStars > 0 else {
-            errorMessage = ReviewError.noRating.errorDescription
-            return
-        }
-        
-        isSubmitting = true
-        errorMessage = nil
-        let apiRate = selectedStars * 2
-        
-        do {
-            try await createReview(reviewText: reviewText, rate: apiRate, movieID: movieID, userID: userID)
-            reviewText = ""
-            selectedStars = 0
-            await fetchReviews(movieID: movieID)
-            print("✅ Review submitted successfully")
-        } catch let error as ReviewError {
-            errorMessage = error.errorDescription
-            print("❌ Submit review error:", error)
-        } catch {
-            errorMessage = "Failed to submit review. Please try again."
-            print("❌ Unexpected error:", error)
-        }
-        
-        isSubmitting = false
-    }
+           guard selectedStars > 0, !reviewText.isEmpty else { return }
+           let apiRate = selectedStars * 2
+           do {
+               try await createReview(reviewText: reviewText, rate: apiRate, movieID: movieID, userID: userID)
+               reviewText = ""
+               selectedStars = 0
+               await fetchReviews(movieID: movieID)
+               print("✅ Review submitted")
+           } catch {
+               errorMessage = error.localizedDescription
+               print("❌ Submit review error:", error)
+           }
+       }
     //private helper fucntion: handles POST request logic
-    private func createReview(reviewText: String, rate: Int, movieID: String, userID: String) async throws {
-        let urlString = "\(APIConstants.baseURL)/\(APIConstants.baseID)/\(APIConstants.tableName)"
-        
-        guard let url = URL(string: urlString) else {
-            throw ReviewError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(APIConstants.apiKey)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 30
-        
-        let body: [String: Any] = [
-            "fields": [
-                "review_text": reviewText,
-                "rate": rate,
-                "movie_id": movieID,
-                "user_id": userID
-            ]
-        ]
-        
-        guard let httpBody = try? JSONSerialization.data(withJSONObject: body) else {
-            throw ReviewError.missingData
-        }
-        
-        request.httpBody = httpBody
-        
-        let (_, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw ReviewError.networkError
-        }
-        
-        guard (200...299).contains(httpResponse.statusCode) else {
-            throw ReviewError.serverError(httpResponse.statusCode)
-        }
-    }
+       private func createReview(reviewText: String, rate: Int, movieID: String, userID: String) async throws {
+           let urlString = "\(APIConstants.baseURL)/\(APIConstants.baseID)/\(APIConstants.tableName)"
+           guard let url = URL(string: urlString) else { throw URLError(.badURL) }
+           var request = URLRequest(url: url)
+           request.httpMethod = "POST"
+           request.setValue("Bearer \(APIConstants.apiKey)", forHTTPHeaderField: "Authorization")
+           request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+           let body: [String: Any] = [
+               "fields": [
+                   "review_text": reviewText,
+                   "rate": rate,
+                   "movie_id": movieID,    // Changed from [movieID] to movieID
+                   "user_id": userID       // Changed from [userID] to userID
+               ]
+           ]
+           request.httpBody = try JSONSerialization.data(withJSONObject: body)
+           let (_, response) = try await URLSession.shared.data(for: request)
+           guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+               throw URLError(.badServerResponse)
+           }
+       }
+    
     //DEL review
     func deleteReview(reviewID: String, movieID: String) async {
         isLoading = true

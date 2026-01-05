@@ -127,23 +127,24 @@ struct WriteReviewView: View {
 
     //Submit Review
     private func submitReview() {
-        guard !reviewText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = "Please enter a review."
-            return
-        }
-        
-        guard rating > 0 else {
-            errorMessage = "Please select a rating."
-            return
-        }
-
-        errorMessage = nil
-        
-        Task {
-            await reviewVM.submitReview(movieID: movieID, userID: userID)
-            dismiss()
-        }
-    }
+                guard !reviewText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    errorMessage = "Please enter a review."
+                    return
+                }
+                guard rating > 0 else {
+                    errorMessage = "Please select a rating."
+                    return
+                }
+                errorMessage = nil
+                reviewVM.selectedStars = rating
+                reviewVM.reviewText = reviewText
+                // Make it async so it waits for API
+                Task {
+                    await reviewVM.submitReview(movieID: movieID, userID: userID)
+                    //reviewVM.fetchReviews(movieID: movieID) // refresh reviews
+                    dismiss()
+                }
+            }
 }
 
 // Preview
