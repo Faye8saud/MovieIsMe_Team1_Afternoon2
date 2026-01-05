@@ -53,8 +53,9 @@ The app follows the **MVVM (Model–View–ViewModel)** pattern.
 
 ### Models
 - `MovieModel`
+- `MovieActorModels`
+ - `MovieDirectorModels`
 - `MovieAPiModel`
-- `DirectorModel`
 - `SavedMoviesModel`
 - `UserAPiModel`
 - `ReviewAPiModel`
@@ -65,9 +66,8 @@ The app follows the **MVVM (Model–View–ViewModel)** pattern.
 - `SavedMoviesViewModel` – Fetches and saves bookmarked movies
 - `UserViewModel` – Manages user session and profile data
 -  `ReviewViewModel` – fetches and manages reviews
-- `ActorViewModel` – fetches actors
--  `DirectorViewModel` – fetches directors
 -  `sessionManager` – keeps track of user sessions
+-  `APIconstants` – to store API reusable constants
 
 ### Views
 - `MovieCenterView`
