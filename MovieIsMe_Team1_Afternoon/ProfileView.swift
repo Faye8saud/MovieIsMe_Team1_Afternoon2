@@ -22,7 +22,6 @@ struct ProfileView: View {
     
   
     var body: some View {
-        NavigationStack{
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     
@@ -148,10 +147,9 @@ struct ProfileView: View {
                 .padding()
             }
             .background(Color.black.ignoresSafeArea())
-        }
-        .task {
-            await movieVM.fetchMovies()
-            await savedVM.fetchSavedMovies()
+            .task {
+                await movieVM.fetchMovies()
+                await savedVM.fetchSavedMovies()
         }
 
     }

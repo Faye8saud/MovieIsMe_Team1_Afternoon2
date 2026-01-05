@@ -16,7 +16,6 @@ struct ProfileEditingView: View {
 
     // MARK: - Body
     var body: some View {
-        NavigationStack {
             VStack {
                 navigationBar
                 avatarView
@@ -48,8 +47,7 @@ struct ProfileEditingView: View {
             }
             .background(Color.black.ignoresSafeArea())
             .preferredColorScheme(.dark)
-        }
-        .onAppear {
+            .onAppear {
             if let user = userViewModel.currentUser?.fields {
                 let nameParts = user.name.split(separator: " ", maxSplits: 1).map(String.init)
                 draftFirstName = nameParts.first ?? ""

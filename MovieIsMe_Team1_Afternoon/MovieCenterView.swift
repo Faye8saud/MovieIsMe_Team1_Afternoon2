@@ -204,4 +204,5 @@ var body: some View {
 #Preview {
     MovieCenterView()
         .environmentObject(UserViewModel())
+        .environmentObject(ReviewViewModel())
 }
