@@ -100,23 +100,38 @@ struct SignInView: View {
                     TextField("Email", text: $email)
                         .font(.system(size: 20))
                         .foregroundColor(
-                                userViewModel.signInError == .email ? .red : .white
-                            )
-                            .tint(
-                                userViewModel.signInError == .email ? .red : .white   // cursor color
-                            )
-                        .padding(.horizontal, 12)   // internal padding
+                            userViewModel.signInError == .email ? .red : .white
+                        )
+                        .tint(
+                            userViewModel.signInError == .email ? .red : .white
+                        )
+                        .padding(.horizontal, 12)
                         .padding(.vertical, 10)
-                        .frame(maxWidth: .infinity) // fill width
+                        .frame(maxWidth: .infinity)
                         .background(Color.inputField.opacity(0.5))
                         .cornerRadius(8)
                         .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(
-                                        userViewModel.signInError == .email ? .red : .clear,
-                                        lineWidth: 1.5
-                                    )
-                            )
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(
+                                    userViewModel.signInError == .email ? .red : .clear,
+                                    lineWidth: 1.5
+                                )
+                        )
+                        .onChange(of: email) { _ in
+                            if userViewModel.signInError == .email {
+                                userViewModel.signInError = nil
+                            }
+                        }
+                    if userViewModel.signInError == .email,
+                       let message = userViewModel.errorMessage {
+                        Text(message)
+                            .font(.system(size: 16))
+                            .foregroundColor(.red)
+                            //.padding(.top, -1)
+                    }
+
+
+
 
 
                     Text("Password")
@@ -125,10 +140,25 @@ struct SignInView: View {
                         .fontWeight(.bold)
                         .padding(.bottom, -10)
 
-                    PasswordField(
-                        password: $password,
-                        isError: userViewModel.signInError == .password
-                    )
+                    VStack(alignment: .leading, spacing: 4) {
+                        PasswordField(
+                            password: $password,
+                            isError: userViewModel.signInError == .password
+                        )
+                        .onChange(of: password) { _ in
+                            if userViewModel.signInError == .password {
+                                userViewModel.signInError = nil
+                            }
+                        }
+
+                        if userViewModel.signInError == .password,
+                           let message = userViewModel.errorMessage {
+                            Text(message)
+                                .font(.system(size: 16))
+                                .foregroundColor(.red)
+                        }
+                    }
+
 
                     Button {
                         signedIn = userViewModel.signIn(email: email, password: password)

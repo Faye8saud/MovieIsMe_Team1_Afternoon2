@@ -12,16 +12,12 @@ struct ProfileView: View {
     
 @EnvironmentObject var userViewModel: UserViewModel
 
-    let movies = [
-        "poster1",
-       "poster2",
-       "poster3"
-   ]
-    //let movies: [String] = []
+
 @State private var backButton = false
     
   
     var body: some View {
+       
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     
@@ -147,9 +143,10 @@ struct ProfileView: View {
                 .padding()
             }
             .background(Color.black.ignoresSafeArea())
-            .task {
-                await movieVM.fetchMovies()
-                await savedVM.fetchSavedMovies()
+            .navigationBarBackButtonHidden(true)
+        .task {
+            await movieVM.fetchMovies()
+            await savedVM.fetchSavedMovies()
         }
 
     }
