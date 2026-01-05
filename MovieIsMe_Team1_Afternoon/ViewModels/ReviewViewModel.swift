@@ -12,12 +12,7 @@ import Combine
 @MainActor
 class ReviewViewModel: ObservableObject {
     
-    enum APIConstants {
-        static let baseURL = "https://api.airtable.com/v0"
-        static let baseID = "appsfcB6YESLj4NCN"
-        static let tableName = "Reviews"
-        static let apiKey = "pat7E88yW3dgzlY61.2b7d03863aca9f1262dcb772f7728bd157e695799b43c7392d5faf4f52fcb001"
-    }
+    
     //error handeling
     enum ReviewError: LocalizedError {
         case invalidURL
@@ -111,9 +106,18 @@ class ReviewViewModel: ObservableObject {
     }
     //private helper function: Get reviews from API
     private func getReviews(movieID: String) async throws -> [ReviewRecord] {
-        let urlString = "\(APIConstants.baseURL)/\(APIConstants.baseID)/\(APIConstants.tableName)?filterByFormula={movie_id}=\"\(movieID)\""
-        
-        guard let url = URL(string: urlString) else {
+        // Get the base table URL
+        guard var urlComponents = URLComponents(url: APIConstants.url(for: APIConstants.Tables.reviews) ?? URL(string: "")!, resolvingAgainstBaseURL: false) else {
+            throw ReviewError.invalidURL
+        }
+
+        // filter query
+        urlComponents.queryItems = [
+            URLQueryItem(name: "filterByFormula", value: "{movie_id}=\"\(movieID)\"")
+        ]
+
+        // Get the final URL
+        guard let url = urlComponents.url else {
             throw ReviewError.invalidURL
         }
         
@@ -187,8 +191,10 @@ class ReviewViewModel: ObservableObject {
        }
     //private helper fucntion: handles POST request logic
        private func createReview(reviewText: String, rate: Int, movieID: String, userID: String) async throws {
-           let urlString = "\(APIConstants.baseURL)/\(APIConstants.baseID)/\(APIConstants.tableName)"
-           guard let url = URL(string: urlString) else { throw URLError(.badURL) }
+           guard let url = APIConstants.url(for: APIConstants.Tables.reviews) else {
+               throw URLError(.badURL)
+           }
+
            var request = URLRequest(url: url)
            request.httpMethod = "POST"
            request.setValue("Bearer \(APIConstants.apiKey)", forHTTPHeaderField: "Authorization")
@@ -229,9 +235,7 @@ class ReviewViewModel: ObservableObject {
     }
     //private helper fucntion
     private func removeReview(reviewID: String) async throws {
-        let urlString = "\(APIConstants.baseURL)/\(APIConstants.baseID)/\(APIConstants.tableName)/\(reviewID)"
-        
-        guard let url = URL(string: urlString) else {
+        guard let url = APIConstants.recordURL(table: APIConstants.Tables.reviews, recordID: reviewID) else {
             throw ReviewError.invalidURL
         }
         

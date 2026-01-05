@@ -16,6 +16,7 @@ enum APIConstants {
         static let users = "users"
         static let movies = "movies"
         static let savedMovies = "saved_movies"
+        static let reviews = "Reviews"
     }
 
     static func url(for table: String) -> URL? {
